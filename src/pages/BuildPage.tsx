@@ -2589,7 +2589,7 @@ export function BuildPage() {
                               ))}
                             </div>
                             <span className="text-text-secondary text-sm">Generating infographic with Gemini...</span>
-                            <span className="text-text-muted text-xs">Claude writes the prompt, then Gemini creates the image</span>
+                        <span className="text-text-muted text-xs">OpenAI writes the prompt, then Gemini creates the image</span>
                           </div>
                         ) : (
                           <>

@@ -14,7 +14,7 @@ export interface ProviderConfig {
 }
 
 export const CLAUDE_COST_NOTE =
-  'Pay-as-you-go \u2014 a full course typically costs around $20\u201330, depending on length.';
+  'Pay-as-you-go \u2014 a full course typically costs around $10\u201325, depending on model and length.';
 
 export const ELEVENLABS_COST_NOTE =
   'Starter plan ($5/mo) recommended \u2014 a full course audiobook uses ~60\u201390 min of quota.';
@@ -24,24 +24,24 @@ export const GEMINI_COST_NOTE =
 
 export const CLAUDE_CONFIG: ProviderConfig = {
   id: 'claude',
-  heading: 'Connect to Claude',
-  connectedHeading: 'Connected to Claude',
+  heading: 'Connect to OpenAI',
+  connectedHeading: 'Connected to OpenAI',
   tagline:
-    'Claude writes your course content, quizzes, and activities. This connection is required.',
+    'OpenAI writes your course content, quizzes, and activities. This connection is required.',
   required: true,
   costNote: CLAUDE_COST_NOTE,
-  deepLink: 'https://console.anthropic.com/settings/keys',
-  deepLinkLabel: 'Open Anthropic Console',
+  deepLink: 'https://platform.openai.com/api-keys',
+  deepLinkLabel: 'Open OpenAI Dashboard',
   steps: [
-    { text: 'Create a free account at console.anthropic.com' },
-    { text: 'Add at least $5 in API credits (Settings \u2192 Billing)' },
+    { text: 'Create an account at platform.openai.com' },
+    { text: 'Add billing credit in the OpenAI dashboard' },
     { text: 'Create an API key and paste it below' },
   ],
-  placeholder: 'sk-ant-...',
+  placeholder: 'sk-...',
   warnings: [
     {
       type: 'alert',
-      text: 'A Claude Pro subscription is not the same as API access. You need API credits from the Anthropic Console.',
+      text: 'A ChatGPT subscription is not the same as API access. Enable billing in the OpenAI API dashboard.',
     },
     {
       type: 'info',
@@ -49,7 +49,7 @@ export const CLAUDE_CONFIG: ProviderConfig = {
     },
   ],
   validationFailHint:
-    'Check that you copied the full key from console.anthropic.com and that your account has API credits.',
+    'Check that you copied the full key from platform.openai.com and that your account has API billing enabled.',
 };
 
 export const ELEVENLABS_CONFIG: ProviderConfig = {

@@ -5,6 +5,8 @@ import { ProviderCard } from './ProviderCard';
 import { CLAUDE_CONFIG, ELEVENLABS_CONFIG, GEMINI_CONFIG } from './providerConfigs';
 
 export function ApiKeyPanel() {
+  const env = (import.meta as { env?: Record<string, string> }).env;
+  const useServerOpenAi = env?.VITE_USE_OPENAI_PROXY === 'true';
   const {
     claudeApiKey, elevenLabsApiKey, geminiApiKey,
     claudeKeyValid, elevenLabsKeyValid, geminiKeyValid,
@@ -18,17 +20,19 @@ export function ApiKeyPanel() {
     if (!claudeApiKey.trim()) return;
     setIsValidatingClaude(true);
     try {
-      const { default: Anthropic } = await import('@anthropic-ai/sdk');
-      const client = new Anthropic({
-        apiKey: claudeApiKey.trim(),
-        dangerouslyAllowBrowser: true,
+      const res = await fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${claudeApiKey.trim()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: MODELS.haiku,
+          input: 'ping',
+          max_output_tokens: 5,
+        }),
       });
-      await client.messages.create({
-        model: MODELS.haiku,
-        max_tokens: 10,
-        messages: [{ role: 'user', content: 'Hi' }],
-      });
-      setClaudeKeyValid(true);
+      setClaudeKeyValid(res.ok);
     } catch {
       setClaudeKeyValid(false);
     } finally {
@@ -71,10 +75,10 @@ export function ApiKeyPanel() {
   useEffect(() => {
     if (mountedRef.current) return;
     mountedRef.current = true;
-    if (claudeApiKey.trim() && claudeKeyValid === null) validateClaude();
+    if (!useServerOpenAi && claudeApiKey.trim() && claudeKeyValid === null) validateClaude();
     if (elevenLabsApiKey.trim() && elevenLabsKeyValid === null) validateElevenLabs();
     if (geminiApiKey.trim() && geminiKeyValid === null) validateGemini();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [useServerOpenAi]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-5">
@@ -92,15 +96,30 @@ export function ApiKeyPanel() {
           </p>
         </div>
       </div>
-      <ProviderCard
-        config={CLAUDE_CONFIG}
-        apiKey={claudeApiKey}
-        keyValid={claudeKeyValid}
-        isValidating={isValidatingClaude}
-        setKey={setClaudeApiKey}
-        validate={validateClaude}
-        defaultExpanded={!claudeApiKey}
-      />
+      {useServerOpenAi ? (
+        <div className="border border-emerald-500/30 bg-emerald-500/5 rounded-xl p-5">
+          <div className="flex items-center gap-2.5 mb-1">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-emerald-400 shrink-0">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <span className="text-sm font-medium text-text-primary">Connected to OpenAI (Server Proxy)</span>
+            <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400">Required</span>
+          </div>
+          <p className="text-xs text-text-muted">
+            OpenAI requests are routed through your server at <code>/api/openai/responses</code>. No browser API key needed.
+          </p>
+        </div>
+      ) : (
+        <ProviderCard
+          config={CLAUDE_CONFIG}
+          apiKey={claudeApiKey}
+          keyValid={claudeKeyValid}
+          isValidating={isValidatingClaude}
+          setKey={setClaudeApiKey}
+          validate={validateClaude}
+          defaultExpanded={!claudeApiKey}
+        />
+      )}
       <ProviderCard
         config={ELEVENLABS_CONFIG}
         apiKey={elevenLabsApiKey}
