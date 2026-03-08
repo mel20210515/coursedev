@@ -24,24 +24,24 @@ export const GEMINI_COST_NOTE =
 
 export const CLAUDE_CONFIG: ProviderConfig = {
   id: 'claude',
-  heading: 'Connect to AI Provider',
-  connectedHeading: 'Connected to AI Provider',
+  heading: 'Connect to Anthropic Claude',
+  connectedHeading: 'Connected to Anthropic Claude',
   tagline:
     'The AI writes your course content, quizzes, and activities. This connection is required.',
   required: true,
   costNote: CLAUDE_COST_NOTE,
-  deepLink: '#',
-  deepLinkLabel: 'Open API Console',
+  deepLink: 'https://console.anthropic.com/settings/keys',
+  deepLinkLabel: 'Open Anthropic Console',
   steps: [
-    { text: 'Create an account at your API provider' },
-    { text: 'Add at least $5 in API credits (Settings \u2192 Billing)' },
-    { text: 'Create an API key and paste it below' },
+    { text: 'Create or sign in to your Anthropic account' },
+    { text: 'Add API credits in Anthropic Console (Billing)' },
+    { text: 'Create an Anthropic API key and paste it below' },
   ],
   placeholder: 'sk-...',
   warnings: [
     {
       type: 'alert',
-      text: 'A consumer subscription is not the same as API access. You need API credits from the Developer Console.',
+      text: 'A consumer subscription is not the same as API access. You need API credits in Anthropic Console.',
     },
     {
       type: 'info',
@@ -49,7 +49,7 @@ export const CLAUDE_CONFIG: ProviderConfig = {
     },
   ],
   validationFailHint:
-    'Check that you copied the full key from your provider console and that your account has API credits.',
+    'Check that you copied the full key from Anthropic Console and that your account has API credits.',
 };
 
 export const ELEVENLABS_CONFIG: ProviderConfig = {
@@ -109,3 +109,7 @@ export const GEMINI_CONFIG: ProviderConfig = {
 };
 
 export const PROVIDER_CONFIGS = [CLAUDE_CONFIG, ELEVENLABS_CONFIG, GEMINI_CONFIG] as const;
+
+
+
+
