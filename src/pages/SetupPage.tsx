@@ -40,9 +40,11 @@ export function SetupPage() {
   const navigate = useNavigate();
   const { setup, setStage, completeStage, resetDownstream } = useCourseStore();
   const { claudeApiKey, claudeKeyValid, elevenLabsKeyValid, geminiKeyValid, elevenLabsApiKey, geminiApiKey } = useApiStore();
+  const env = (import.meta as { env?: Record<string, string> }).env;
+  const useServerOpenAi = env?.VITE_USE_OPENAI_PROXY === 'true';
 
   const hasTopic = setup.topic.trim().length > 10;
-  const hasApiKey = claudeApiKey.trim().length > 0;
+  const hasApiKey = useServerOpenAi ? true : claudeApiKey.trim().length > 0;
   const canProceed = hasTopic && hasApiKey;
 
   const handleGenerate = () => {
@@ -157,7 +159,7 @@ export function SetupPage() {
               <span className="text-text-muted shrink-0">Services:</span>
               <span className="text-text-secondary flex items-center gap-1.5 flex-wrap">
                 <span className={claudeKeyValid === true ? 'text-emerald-400' : claudeApiKey ? 'text-amber-400' : 'text-text-muted'}>
-                  Claude {claudeKeyValid === true ? '✓' : claudeApiKey ? '?' : '✗'}
+                  OpenAI {useServerOpenAi ? 'Server' : (claudeKeyValid === true ? 'OK' : claudeApiKey ? 'Pending' : 'Missing')}
                 </span>
                 {' · '}
                 <span className={elevenLabsKeyValid === true ? 'text-emerald-400' : elevenLabsApiKey ? 'text-amber-400' : 'text-text-muted'}>
@@ -171,7 +173,7 @@ export function SetupPage() {
             </div>
           </div>
 
-          {claudeKeyValid === false && (
+          {!useServerOpenAi && claudeKeyValid === false && (
             <div className="mb-4 p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm">
               Your Claude connection didn't work. Check that you copied the full key from{' '}
               <span className="underline hover:text-error/80">
@@ -206,3 +208,5 @@ export function SetupPage() {
     </motion.div>
   );
 }
+
+

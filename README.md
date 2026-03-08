@@ -1,5 +1,5 @@
 <!--
-  keywords: ai course generator, university course builder, ai education, learning science, quiz generator, slide generator, curriculum builder, edtech, prompt engineering, claude, anthropic
+  keywords: ai course generator, university course builder, ai education, learning science, quiz generator, slide generator, curriculum builder, edtech, prompt engineering, openai
   homepage: https://classbuild.ai
   cli: scripts/generate-course.ts
   llm-txt: https://classbuild.ai/llm.txt
@@ -40,15 +40,23 @@ npm install
 npm run dev
 ```
 
-Open [localhost:5173](http://localhost:5173) and enter your API key on the Setup page.
+Open [localhost:5173](http://localhost:5173) and configure API access on the Setup page.
 
-**Bring Your Own Key** — ClassBuild runs entirely in your browser. Your API keys are never sent to any server.
+## Server-side OpenAI proxy (recommended)
+
+Use the built-in proxy route so OpenAI keys are kept off the client:
+
+1. Set `OPENAI_API_KEY` on your server (or local shell before `npm run dev`)
+2. Set `VITE_USE_OPENAI_PROXY=true`
+3. Frontend calls `/api/openai/responses`, and the server forwards to OpenAI
+
+For Vercel, deploy with `OPENAI_API_KEY` in Project Environment Variables.
 
 ## What API keys do I need?
 
 | Key | Required | Purpose |
 |-----|----------|---------|
-| Anthropic Claude | Yes | Course generation (all stages) |
+| OpenAI | Yes | Course generation (all stages), via `/api/openai/responses` |
 | ElevenLabs | No | Voice narration |
 | Google Gemini | No | AI-generated infographics |
 
@@ -57,7 +65,7 @@ Open [localhost:5173](http://localhost:5173) and enter your API key on the Setup
 ClassBuild is a six-stage pipeline:
 
 1. **Setup** — Define your topic, audience level, chapter count, and preferences
-2. **Syllabus** — Claude designs the full course arc: chapter narratives, key concepts, and learning science annotations
+2. **Syllabus** — OpenAI designs the full course arc: chapter narratives, key concepts, and learning science annotations
 3. **Research** — Web search gathers real-world sources and examples to ground every chapter
 4. **Build** — Generate all materials live: chapters, quizzes, slides, audio, and infographics stream in real time
 5. **Export** — Download as ZIP, PowerPoint, or publish as a standalone course viewer site
@@ -69,7 +77,7 @@ Four visual themes (Midnight, Classic, Ocean, Warm) carry through every output �
 The ClassBuild CLI generates complete courses from the command line — no browser required. Ideal for batch-building entire programs or course catalogues.
 
 ```bash
-ANTHROPIC_API_KEY=sk-... npx tsx scripts/generate-course.ts \
+OPENAI_API_KEY=sk-... npx tsx scripts/generate-course.ts \
   --topic "The Psychology of Prejudice" \
   --chapters 12 \
   --level advanced-undergrad \
@@ -107,7 +115,7 @@ See 6 example courses built with the CLI at [courses.classbuild.ai](https://cour
 
 ## How do I use ClassBuild's prompt library in my own project?
 
-ClassBuild's 11 prompt builders in `src/prompts/` can be imported directly. Each returns a system prompt and user message for the Anthropic messages API:
+ClassBuild's 11 prompt builders in `src/prompts/` can be imported directly. Each returns a system prompt and user message for the OpenAI Responses API:
 
 ```typescript
 import { buildSyllabusPrompt, parseSyllabusResponse } from 'classbuild/src/prompts/syllabus';
@@ -117,13 +125,13 @@ import { buildPracticeQuizPrompt } from 'classbuild/src/prompts/practiceQuiz';
 
 // Example: generate a syllabus
 const { system, userMessage } = buildSyllabusPrompt(setup);
-const response = await anthropic.messages.create({
-  model: 'claude-sonnet-4-6',
-  system,
-  messages: [{ role: 'user', content: userMessage }],
-  max_tokens: 16000,
+const response = await openai.responses.create({
+  model: 'gpt-4.1-mini',
+  instructions: system,
+  input: [{ role: 'user', content: userMessage }],
+  max_output_tokens: 16000,
 });
-const syllabus = parseSyllabusResponse(response.content[0].text);
+const syllabus = parseSyllabusResponse(response.output_text);
 ```
 
 **Available prompt builders:**
@@ -156,10 +164,13 @@ The syllabus stage annotates every chapter with the specific principles it empha
 
 ## Built with
 
-React 19 · Vite 7 · TypeScript 5.9 · Tailwind CSS 4 · Zustand · Framer Motion · Claude Opus 4.6 / Sonnet 4.6 / Haiku 4.5 · ElevenLabs · Gemini
+React 19 · Vite 7 · TypeScript 5.9 · Tailwind CSS 4 · Zustand · Framer Motion · OpenAI GPT-4.1 / GPT-4.1 mini / GPT-4.1 nano · ElevenLabs · Gemini
 
-Built with Claude for the [Anthropic Hackathon](https://docs.google.com/forms/d/e/1FAIpQLSdAmDqfWux_oP_E55aSaXRahq6lkSi3jBWG4PlMOmhgVUhg-w/viewform) (Feb 2026).
+Originally built for the Anthropic Hackathon (Feb 2026).
 
 ## License
 
 [MIT](LICENSE)
+
+
+

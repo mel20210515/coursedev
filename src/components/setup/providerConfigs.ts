@@ -14,7 +14,7 @@ export interface ProviderConfig {
 }
 
 export const CLAUDE_COST_NOTE =
-  'Pay-as-you-go \u2014 a full course typically costs around $20\u201330, depending on length.';
+  'Pay-as-you-go \u2014 a full course typically costs around $10\u201325, depending on model and length.';
 
 export const ELEVENLABS_COST_NOTE =
   'Starter plan ($5/mo) recommended \u2014 a full course audiobook uses ~60\u201390 min of quota.';
@@ -37,7 +37,7 @@ export const CLAUDE_CONFIG: ProviderConfig = {
     { text: 'Add at least $5 in API credits (Settings \u2192 Billing)' },
     { text: 'Create an API key and paste it below' },
   ],
-  placeholder: 'sk-ant-...',
+  placeholder: 'sk-...',
   warnings: [
     {
       type: 'alert',

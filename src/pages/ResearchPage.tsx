@@ -76,7 +76,7 @@ export function ResearchPage() {
             role: 'user',
             content: buildResearchUserPrompt(chapter.title, chapter.narrative, chapter.keyConcepts),
           }],
-          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          tools: [{ type: 'web_search_preview' }],
           maxTokens: 16000,
         },
         {

@@ -1,5 +1,4 @@
-import type Anthropic from '@anthropic-ai/sdk';
-import { getClient, getThinkingTokens, MODELS, type ThinkingBudget } from './client';
+import { getReasoningEffort, MODELS, type ThinkingBudget } from './client';
 
 export interface WebSearchResult {
   title: string;
@@ -18,14 +17,12 @@ export interface StreamCallbacks {
 }
 
 export interface StreamOptions {
-  apiKey: string;
+  apiKey?: string;
   model?: string;
   system?: string;
-  messages: Anthropic.MessageParam[];
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>;
   thinkingBudget?: ThinkingBudget;
-  // Accepts custom tools and server-side tools (web_search, etc.)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  tools?: any[];
+  tools?: Array<Record<string, unknown>>;
   maxTokens?: number;
 }
 
@@ -43,107 +40,104 @@ export async function streamMessage(
     maxTokens = 16000,
   } = options;
 
-  const client = getClient(apiKey);
   let fullText = '';
 
   try {
-    const params: Anthropic.MessageCreateParams = {
+    const endpoint = getOpenAiEndpoint();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (!isUsingProxyEndpoint(endpoint)) {
+      if (!apiKey) {
+        throw new Error('OpenAI API key is required when proxy mode is disabled');
+      }
+      headers.Authorization = `Bearer ${apiKey}`;
+    }
+
+    const payload: Record<string, unknown> = {
       model,
-      max_tokens: maxTokens,
-      messages,
+      max_output_tokens: maxTokens,
+      input: messages.map((m) => ({
+        role: m.role,
+        content: [{ type: 'input_text', text: m.content }],
+      })),
       stream: true,
     };
 
     if (system) {
-      params.system = system;
+      payload.instructions = system;
     }
 
     if (thinkingBudget) {
-      params.thinking = {
-        type: 'enabled',
-        budget_tokens: getThinkingTokens(thinkingBudget),
-      };
-      params.max_tokens = Math.max(maxTokens, getThinkingTokens(thinkingBudget) + maxTokens);
+      payload.reasoning = { effort: getReasoningEffort(thinkingBudget) };
     }
 
     if (tools && tools.length > 0) {
-      params.tools = tools;
+      payload.tools = normalizeTools(tools);
     }
 
-    const stream = await client.messages.stream(params);
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
 
-    // Track server tool use blocks to capture search queries from deltas
-    const serverToolInputs = new Map<number, string>();
-
-    for await (const event of stream) {
-      if (event.type === 'content_block_start') {
-        const block = event.content_block;
-        if (block.type === 'server_tool_use') {
-          // Server-side tool use (e.g., web_search)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const input = (block as any).input;
-          if (input?.query) {
-            callbacks.onWebSearch?.(input.query);
-          } else {
-            // Input might stream via deltas
-            serverToolInputs.set(event.index, '');
-          }
-        } else if (block.type === 'web_search_tool_result') {
-          // Web search results returned from server
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const content = (block as any).content;
-          if (Array.isArray(content)) {
-            const results: WebSearchResult[] = content
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .filter((r: any) => r.type === 'web_search_result')
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .map((r: any) => ({
-                title: r.title || '',
-                url: r.url || '',
-                pageAge: r.page_age,
-              }));
-            if (results.length > 0) {
-              callbacks.onWebSearchResults?.(results);
-            }
-          }
-        } else if (block.type === 'tool_use') {
-          callbacks.onToolUse?.(block.name, {} as Record<string, unknown>);
-        }
-      } else if (event.type === 'content_block_delta') {
-        const delta = event.delta;
-        if ('text' in delta && delta.text) {
-          fullText += delta.text;
-          callbacks.onText?.(delta.text);
-        } else if ('thinking' in delta && delta.thinking) {
-          callbacks.onThinking?.(delta.thinking);
-        } else if ('partial_json' in delta) {
-          // Accumulate server tool input from deltas
-          const existing = serverToolInputs.get(event.index);
-          if (existing !== undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            serverToolInputs.set(event.index, existing + (delta as any).partial_json);
-          }
-        }
-      } else if (event.type === 'content_block_stop') {
-        // Check for accumulated server tool input
-        const accumulatedInput = serverToolInputs.get(event.index);
-        if (accumulatedInput) {
-          try {
-            const parsed = JSON.parse(accumulatedInput);
-            if (parsed.query) {
-              callbacks.onWebSearch?.(parsed.query);
-            }
-          } catch { /* partial JSON, ignore */ }
-          serverToolInputs.delete(event.index);
-        }
-      }
+    if (!response.ok) {
+      throw new Error(await extractApiError(response));
     }
 
-    // Process final message for complete tool use blocks
-    const finalMessage = await stream.finalMessage();
-    for (const block of finalMessage.content) {
-      if (block.type === 'tool_use') {
-        callbacks.onToolUse?.(block.name, block.input as Record<string, unknown>);
+    if (!response.body) {
+      throw new Error('OpenAI response stream was empty');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data: ')) continue;
+        const data = trimmed.slice(6);
+        if (data === '[DONE]') continue;
+
+        try {
+          const evt = JSON.parse(data) as Record<string, unknown>;
+          const type = typeof evt.type === 'string' ? evt.type : '';
+
+          if (type === 'response.output_text.delta') {
+            const delta = typeof evt.delta === 'string' ? evt.delta : '';
+            if (delta) {
+              fullText += delta;
+              callbacks.onText?.(delta);
+            }
+            continue;
+          }
+
+          if (type.includes('reasoning')) {
+            const delta = typeof evt.delta === 'string' ? evt.delta : '';
+            if (delta) callbacks.onThinking?.(delta);
+            continue;
+          }
+
+          if (type.includes('web_search')) {
+            const query = extractQuery(evt);
+            if (query) callbacks.onWebSearch?.(query);
+
+            const results = extractWebResults(evt);
+            if (results.length > 0) callbacks.onWebSearchResults?.(results);
+            callbacks.onToolUse?.('web_search', {});
+          }
+        } catch {
+          // Ignore malformed SSE chunks and continue streaming.
+        }
       }
     }
 
@@ -179,8 +173,8 @@ export async function streamWithRetry(
 
 // Non-streaming version for simpler calls
 export async function sendMessage(
-  options: Omit<StreamOptions, 'maxTokens'> & { maxTokens?: number }
-): Promise<Anthropic.Message> {
+  options: Omit<StreamOptions, 'maxTokens'> & { maxTokens?: number },
+): Promise<{ outputText: string }> {
   const {
     apiKey,
     model = MODELS.sonnet,
@@ -191,29 +185,124 @@ export async function sendMessage(
     maxTokens = 16000,
   } = options;
 
-  const client = getClient(apiKey);
-
-  const params: Anthropic.MessageCreateParams = {
+  const payload: Record<string, unknown> = {
     model,
-    max_tokens: maxTokens,
-    messages,
+    max_output_tokens: maxTokens,
+    input: messages.map((m) => ({
+      role: m.role,
+      content: [{ type: 'input_text', text: m.content }],
+    })),
   };
 
   if (system) {
-    params.system = system;
+    payload.instructions = system;
   }
 
   if (thinkingBudget) {
-    params.thinking = {
-      type: 'enabled',
-      budget_tokens: getThinkingTokens(thinkingBudget),
-    };
-    params.max_tokens = Math.max(maxTokens, getThinkingTokens(thinkingBudget) + maxTokens);
+    payload.reasoning = { effort: getReasoningEffort(thinkingBudget) };
   }
 
   if (tools && tools.length > 0) {
-    params.tools = tools;
+    payload.tools = normalizeTools(tools);
   }
 
-  return client.messages.create(params);
+  const endpoint = getOpenAiEndpoint();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (!isUsingProxyEndpoint(endpoint)) {
+    if (!apiKey) {
+      throw new Error('OpenAI API key is required when proxy mode is disabled');
+    }
+    headers.Authorization = `Bearer ${apiKey}`;
+  }
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractApiError(response));
+  }
+
+  const data = await response.json() as Record<string, unknown>;
+  return { outputText: extractOutputText(data) };
+}
+
+function normalizeTools(tools: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+  return tools.map((tool) => {
+    const type = typeof tool.type === 'string' ? tool.type : '';
+    if (type === 'web_search_20250305' || type === 'web_search' || type === 'web_search_preview') {
+      return { type: 'web_search_preview' };
+    }
+    return tool;
+  });
+}
+
+function extractOutputText(data: Record<string, unknown>): string {
+  const direct = data.output_text;
+  if (typeof direct === 'string' && direct.length > 0) return direct;
+
+  const output = Array.isArray(data.output) ? data.output : [];
+  const chunks: string[] = [];
+  for (const item of output) {
+    if (!item || typeof item !== 'object') continue;
+    const content = Array.isArray((item as { content?: unknown[] }).content)
+      ? (item as { content: unknown[] }).content
+      : [];
+    for (const part of content) {
+      if (!part || typeof part !== 'object') continue;
+      const text = (part as { text?: unknown }).text;
+      if (typeof text === 'string') chunks.push(text);
+    }
+  }
+  return chunks.join('');
+}
+
+async function extractApiError(response: Response): Promise<string> {
+  try {
+    const data = await response.json() as { error?: { message?: string } };
+    if (data?.error?.message) return data.error.message;
+  } catch {
+    // ignore
+  }
+  return `OpenAI API error (${response.status})`;
+}
+
+function extractQuery(evt: Record<string, unknown>): string | null {
+  if (typeof evt.query === 'string') return evt.query;
+  if (typeof evt.search_query === 'string') return evt.search_query;
+  if (evt.arguments && typeof evt.arguments === 'object') {
+    const args = evt.arguments as Record<string, unknown>;
+    if (typeof args.query === 'string') return args.query;
+  }
+  return null;
+}
+
+function extractWebResults(evt: Record<string, unknown>): WebSearchResult[] {
+  const raw = Array.isArray(evt.results) ? evt.results : [];
+  return raw
+    .filter((r): r is Record<string, unknown> => !!r && typeof r === 'object')
+    .map((r) => ({
+      title: typeof r.title === 'string' ? r.title : '',
+      url: typeof r.url === 'string' ? r.url : '',
+      pageAge: typeof r.page_age === 'string' ? r.page_age : null,
+    }))
+    .filter((r) => !!r.url);
+}
+
+function getOpenAiEndpoint(): string {
+  const env = (import.meta as { env?: Record<string, string> }).env;
+  const explicit = env?.VITE_OPENAI_PROXY_URL?.trim();
+  if (explicit) return explicit;
+
+  const proxyMode = env?.VITE_USE_OPENAI_PROXY;
+  if (proxyMode === 'true') return '/api/openai/responses';
+  return 'https://api.openai.com/v1/responses';
+}
+
+function isUsingProxyEndpoint(endpoint: string): boolean {
+  return endpoint.startsWith('/');
 }
