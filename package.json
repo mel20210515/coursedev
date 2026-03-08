@@ -1,9 +1,9 @@
 {
-  "name": "classbuild",
+  "name": "ai-powered-course-builder",
   "private": false,
   "version": "1.0.0",
-  "description": "AI-powered course generator built on evidence-based learning science",
-  "author": "Jason Tangen",
+  "description": "AI-powered Course Builder",
+  "author": "Kaplan",
   "license": "MIT",
   "homepage": "https://classbuild.ai",
   "repository": {
@@ -15,8 +15,6 @@
     "ai",
     "course-generator",
     "learning-science",
-    "anthropic",
-    "claude",
     "university-course",
     "quiz-generator",
     "slide-generator",

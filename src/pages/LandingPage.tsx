@@ -205,7 +205,7 @@ function CourseCard({ course }: { course: ExampleCourse }) {
 
         <div className="flex flex-wrap gap-1.5 mb-5">
           <span className="px-2.5 py-0.5 rounded-full text-xs font-medium border"
-            style={{ backgroundColor: `${course.themeColor}15`, borderColor: `${course.themeColor}30`, color: course.themeColor }}>
+            style={{ backgroundColor: `${course.themeColor}25`, borderColor: `${course.themeColor}60`, color: course.themeColor }}>
             {course.chapters} chapters
           </span>
           <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-text-secondary">
@@ -282,11 +282,11 @@ const previewCards = [
 // --- Learning science principles ---
 
 const principles = [
-  { color: '#8b5cf6', label: 'Spacing', desc: 'Key concepts reappear across chapters, not just once' },
-  { color: '#06b6d4', label: 'Interleaving', desc: 'Related topics are mixed across practice sets' },
-  { color: '#f59e0b', label: 'Retrieval Practice', desc: 'Built-in opportunities to test recall, not re-read' },
-  { color: '#22c55e', label: 'Concrete Examples', desc: 'Abstract theories grounded in real-world cases' },
-  { color: '#3b82f6', label: 'Dual Coding', desc: 'Verbal + visual: widgets, diagrams, and simulations' },
+  { color: '#240F6E', label: 'Spacing', desc: 'Key concepts reappear across chapters, not just once' },
+  { color: '#005DE8', label: 'Interleaving', desc: 'Related topics are mixed across practice sets' },
+  { color: '#CF7F00', label: 'Retrieval Practice', desc: 'Built-in opportunities to test recall, not re-read' },
+  { color: '#287D21', label: 'Concrete Examples', desc: 'Abstract theories grounded in real-world cases' },
+  { color: '#D6083B', label: 'Dual Coding', desc: 'Verbal + visual: widgets, diagrams, and simulations' },
 ];
 
 // --- Deliverable icons ---
@@ -445,8 +445,7 @@ export function LandingPage() {
       </AnimatePresence>
       {/* ===== HERO ===== */}
       <section
-        className="flex flex-col items-center text-center pt-20 pb-8 px-4 relative overflow-hidden"
-        style={{ background: 'radial-gradient(ellipse at 50% 40%, #1a1a2e 0%, #0f0f1a 70%)' }}
+        className="flex flex-col items-center text-center pt-20 pb-8 px-4 relative overflow-hidden bg-bg-primary"
       >
         {/* Hero background image — faded at top so it only shows in lower half */}
         <div
@@ -465,10 +464,6 @@ export function LandingPage() {
           transition={{ duration: 0.8, ease: 'easeOut' }}
           className="max-w-3xl"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-sm mb-8">
-            <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
-            Anthropic Hackathon 2026
-          </div>
 
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-4">
             One topic in.
@@ -556,9 +551,9 @@ export function LandingPage() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl font-bold mb-4">
-            See what ClassBuild{' '}
-            <span className="bg-gradient-to-r from-violet-400 to-amber-400 bg-clip-text text-transparent">creates</span>
+          <h2 className="text-3xl font-bold mb-4 text-text-primary">
+            See what our AI{' '}
+            <span className="text-violet-500">creates</span>
           </h2>
           <p className="text-text-secondary max-w-2xl mx-auto">
             Six real courses, built end-to-end. Click "See what we entered" to see the input that produced each one.
@@ -588,12 +583,12 @@ export function LandingPage() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 className="text-3xl font-bold mb-4 text-text-primary">
             Every course is architected around how humans{' '}
-            <span className="bg-gradient-to-r from-violet-400 to-amber-400 bg-clip-text text-transparent">actually learn</span>
+            <span className="text-violet-500">actually learn</span>
           </h2>
           <p className="text-text-secondary max-w-2xl mx-auto">
-            These aren't buzzwords. Each principle draws on decades of cognitive science, and ClassBuild weaves all five into every chapter, quiz, and activity it generates.
+            These aren't buzzwords. Each principle draws on decades of cognitive science. All five are woven into every chapter, quiz, and activity generated.
           </p>
         </motion.div>
 
@@ -608,10 +603,10 @@ export function LandingPage() {
               className="flex flex-col items-center text-center w-36"
             >
               <div
-                className="px-4 py-1.5 rounded-full text-sm font-medium mb-3 border"
+                className="px-4 py-1.5 rounded-full text-sm font-medium mb-3 border shadow-sm"
                 style={{
-                  backgroundColor: `${p.color}15`,
-                  borderColor: `${p.color}30`,
+                  backgroundColor: `${p.color}33`, // 20% opacity for better visibility
+                  borderColor: `${p.color}80`, // 50% opacity for crisper border
                   color: p.color,
                 }}
               >
@@ -730,7 +725,7 @@ export function LandingPage() {
             <div>
               <h3 className="text-base font-semibold text-text-primary mb-1">Building multiple courses?</h3>
               <p className="text-sm text-text-secondary mb-3">
-                The ClassBuild CLI can generate complete courses headlessly — ideal for creating entire programs or course catalogues.
+                The CLI tool can generate complete courses headlessly — ideal for creating entire programs or course catalogues.
               </p>
               <a
                 href="https://github.com/jtangen/classbuild#cli--headless-course-generation"
@@ -753,7 +748,7 @@ export function LandingPage() {
         <div className="flex items-center justify-center gap-3 mb-4">
           <span className="text-text-muted text-xs">Powered by</span>
           {[
-            { label: 'Claude', sub: 'Anthropic', color: '#8b5cf6' },
+            { label: 'Primary AI Model', color: '#8b5cf6' },
             { label: 'ElevenLabs', sub: 'Voice', color: '#64748b' },
             { label: 'Gemini', sub: 'Google', color: '#3b82f6' },
           ].map((b) => (
@@ -774,7 +769,7 @@ export function LandingPage() {
           Your API keys never leave your browser. No backend, no tracking, no accounts.
         </p>
         <p className="text-text-muted/50 text-xs">
-          ClassBuild — Anthropic Hackathon, Feb 10-17, 2026
+          AI-powered Course Builder
         </p>
       </footer>
     </div>

@@ -225,11 +225,10 @@ export function ProviderCard({
               {config.warnings.map((warning, i) => (
                 <div
                   key={i}
-                  className={`text-xs p-3 rounded-lg ${
-                    warning.type === 'alert'
+                  className={`text-xs p-3 rounded-lg ${warning.type === 'alert'
                       ? 'bg-amber-500/5 border border-amber-500/15 text-amber-400'
                       : 'bg-violet-500/5 border border-violet-500/10 text-text-secondary'
-                  }`}
+                    }`}
                 >
                   {warning.text}
                 </div>
@@ -312,7 +311,7 @@ export function ProviderCard({
       </div>
 
       <p className="text-[11px] text-text-muted mt-2">
-        Stored in your browser only. Sent directly to {config.id === 'claude' ? 'Anthropic' : config.id === 'elevenLabs' ? 'ElevenLabs' : 'Google'}.
+        Stored in your browser only. Sent directly to your API provider.
       </p>
 
       {/* Validation error */}

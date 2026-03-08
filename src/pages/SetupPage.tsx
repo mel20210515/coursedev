@@ -62,7 +62,7 @@ export function SetupPage() {
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2">Course Setup</h1>
         <p className="text-text-secondary">
-          Tell us about the course you want to build. ClassBuild will handle the rest.
+          Tell us about the course you want to build. The AI will handle the rest.
         </p>
       </div>
 
@@ -174,9 +174,9 @@ export function SetupPage() {
           {claudeKeyValid === false && (
             <div className="mb-4 p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm">
               Your Claude connection didn't work. Check that you copied the full key from{' '}
-              <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="underline hover:text-error/80">
-                console.anthropic.com
-              </a>{' '}
+              <span className="underline hover:text-error/80">
+                your API provider console
+              </span>{' '}
               and that your account has API credits.
             </div>
           )}
@@ -197,8 +197,8 @@ export function SetupPage() {
           {!canProceed && (
             <p className="text-xs text-text-muted text-center mt-3">
               {!hasTopic && !hasApiKey ? 'Enter a course topic and add your Anthropic API key to continue' :
-               !hasTopic ? (setup.topic.trim().length === 0 ? 'Enter a course topic to continue' : 'Please provide a more detailed topic description') :
-               'Add your Anthropic API key to continue'}
+                !hasTopic ? (setup.topic.trim().length === 0 ? 'Enter a course topic to continue' : 'Please provide a more detailed topic description') :
+                  'Add your Anthropic API key to continue'}
             </p>
           )}
         </motion.div>

@@ -402,7 +402,7 @@ export function buildCourseViewerHtml(
       ${sidebarItems}
     </div>
     <div class="sidebar-footer">
-      Built with <a href="#">ClassBuild</a>
+      Built with <a href="#">AI-powered Course Builder</a>
     </div>
   </nav>
 

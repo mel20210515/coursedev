@@ -24,16 +24,16 @@ export const GEMINI_COST_NOTE =
 
 export const CLAUDE_CONFIG: ProviderConfig = {
   id: 'claude',
-  heading: 'Connect to Claude',
-  connectedHeading: 'Connected to Claude',
+  heading: 'Connect to AI Provider',
+  connectedHeading: 'Connected to AI Provider',
   tagline:
-    'Claude writes your course content, quizzes, and activities. This connection is required.',
+    'The AI writes your course content, quizzes, and activities. This connection is required.',
   required: true,
   costNote: CLAUDE_COST_NOTE,
-  deepLink: 'https://console.anthropic.com/settings/keys',
-  deepLinkLabel: 'Open Anthropic Console',
+  deepLink: '#',
+  deepLinkLabel: 'Open API Console',
   steps: [
-    { text: 'Create a free account at console.anthropic.com' },
+    { text: 'Create an account at your API provider' },
     { text: 'Add at least $5 in API credits (Settings \u2192 Billing)' },
     { text: 'Create an API key and paste it below' },
   ],
@@ -41,7 +41,7 @@ export const CLAUDE_CONFIG: ProviderConfig = {
   warnings: [
     {
       type: 'alert',
-      text: 'A Claude Pro subscription is not the same as API access. You need API credits from the Anthropic Console.',
+      text: 'A consumer subscription is not the same as API access. You need API credits from the Developer Console.',
     },
     {
       type: 'info',
@@ -49,7 +49,7 @@ export const CLAUDE_CONFIG: ProviderConfig = {
     },
   ],
   validationFailHint:
-    'Check that you copied the full key from console.anthropic.com and that your account has API credits.',
+    'Check that you copied the full key from your provider console and that your account has API credits.',
 };
 
 export const ELEVENLABS_CONFIG: ProviderConfig = {
@@ -71,7 +71,7 @@ export const ELEVENLABS_CONFIG: ProviderConfig = {
   warnings: [
     {
       type: 'alert',
-      text: 'Restricted API keys won\u2019t work with ClassBuild. Toggle off "Restrict Key" in your ElevenLabs settings.',
+      text: 'Restricted API keys won\u2019t work with the application. Toggle off "Restrict Key" in your ElevenLabs settings.',
     },
   ],
   validationFailHint:
