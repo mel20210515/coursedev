@@ -20,19 +20,17 @@ export function ApiKeyPanel() {
     if (!claudeApiKey.trim()) return;
     setIsValidatingClaude(true);
     try {
-      const res = await fetch('https://api.openai.com/v1/responses', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${claudeApiKey.trim()}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: MODELS.haiku,
-          input: 'ping',
-          max_output_tokens: 5,
-        }),
+      const { default: Anthropic } = await import('@anthropic-ai/sdk');
+      const client = new Anthropic({
+        apiKey: claudeApiKey.trim(),
+        dangerouslyAllowBrowser: true,
       });
-      setClaudeKeyValid(res.ok);
+      await client.messages.create({
+        model: MODELS.haiku,
+        max_tokens: 5,
+        messages: [{ role: 'user', content: 'ping' }],
+      });
+      setClaudeKeyValid(true);
     } catch {
       setClaudeKeyValid(false);
     } finally {
