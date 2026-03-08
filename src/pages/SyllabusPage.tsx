@@ -121,8 +121,15 @@ export function SyllabusPage() {
   };
 
   const displayChapters = syllabus?.chapters || partialChapters;
-  const displayTitle = syllabus?.courseTitle || partialTitle;
-  const displayOverview = syllabus?.courseOverview || partialOverview;
+  const displayTitle = typeof syllabus?.courseTitle === 'string'
+    ? syllabus.courseTitle
+    : partialTitle;
+  const displayOverview = typeof syllabus?.courseOverview === 'string'
+    ? syllabus.courseOverview
+    : partialOverview;
+  const overviewSentences = displayOverview
+    ? String(displayOverview).split(/(?<=\.)\s+/)
+    : [];
 
   return (
     <motion.div
@@ -151,8 +158,8 @@ export function SyllabusPage() {
             <p className="text-text-secondary text-sm leading-relaxed">
               {showFullOverview
                 ? displayOverview
-                : displayOverview.split(/(?<=\.)\s+/).slice(0, 3).join(' ')}
-              {!showFullOverview && displayOverview.split(/(?<=\.)\s+/).length > 3 && (
+                : overviewSentences.slice(0, 3).join(' ')}
+              {!showFullOverview && overviewSentences.length > 3 && (
                 <button
                   onClick={() => setShowFullOverview(true)}
                   className="ml-1 text-violet-400 hover:text-violet-300 cursor-pointer bg-transparent border-0 p-0 text-sm"
@@ -160,7 +167,7 @@ export function SyllabusPage() {
                   Read more
                 </button>
               )}
-              {showFullOverview && displayOverview.split(/(?<=\.)\s+/).length > 3 && (
+              {showFullOverview && overviewSentences.length > 3 && (
                 <button
                   onClick={() => setShowFullOverview(false)}
                   className="ml-1 text-violet-400 hover:text-violet-300 cursor-pointer bg-transparent border-0 p-0 text-sm"
@@ -325,3 +332,4 @@ export function SyllabusPage() {
     </motion.div>
   );
 }
+
